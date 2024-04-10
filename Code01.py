@@ -198,6 +198,7 @@ def classement(data, data_test):
     plt.title('Importance d’attribut selon XGB')
     plt.grid(False)
 
+    '''
     apprenti = RFC.fit(x,y)
     feature_importance = np.array(apprenti.feature_importances_).tolist()
     feature_names = list(x.columns)
@@ -208,6 +209,7 @@ def classement(data, data_test):
     plt.title('Importance d’attribut selon Random Forest')
     plt.xlabel('F score')
     plt.ylabel('Attributs')
+    '''
     #plt.show()
 
     # créer matrice de confusion pour XGB
@@ -221,6 +223,7 @@ def classement(data, data_test):
     plt.title('Matrice de confusion XGB', color = "b")
     plt.subplots_adjust(wspace = .3, hspace = .3)
 
+    '''
     # créer matrice de confusion pour RandomForest
     fig = plt.figure(figsize=(5, 5))
     fig.set_facecolor("#F3F3F3")
@@ -231,6 +234,7 @@ def classement(data, data_test):
                 linewidths = 2, linecolor = "w", cmap = "Set1")
     plt.title('Matrice de confusion RFC', color = "b")
     plt.subplots_adjust(wspace = .3, hspace = .3)
+    '''
     plt.show()
 
 
