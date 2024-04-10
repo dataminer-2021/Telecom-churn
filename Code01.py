@@ -10,7 +10,8 @@ import seaborn as sns
 # Importer les 2 fichiers (entrainement et test) combinés
 abonnes = pd.concat(map(pd.read_csv, ["D:\Documents\Github\Telecom-churn\churn-bigml-80.csv", "D:\Documents\Github\Telecom-churn\churn-bigml-20.csv"]))
 print("# # # abonnes.head() # # #\n", abonnes.head().transpose())
-print("\nNombre de rangees :", len(abonnes), "\n")
+print("\nabonnes.info() :\n")
+print(abonnes.info())
 print("# # # Valeurs uniques # # #\n", abonnes.nunique(), "\n")
 
 # Transformer les attributs non-numeriques en numeriques (sauf State)
@@ -62,10 +63,25 @@ data = [trace]
 fig = go.Figure(data=data, layout=layout)
 py.plot(fig)
 
+''' Le resultat de la corrélation de Pearson montre qu'il y a 5 couples d'attributs qui sont fortement corrélés :
+1. Total intl minutes et Total intl charge
+2. Total night minutes et Total night charge
+3. Total eve minutes et Total eve charge
+4. Total day minutes et Total day charge
+5. Voice mail plan et Number vmail messages
+Alors, on garde le premier attribut seulement de chaque couple pendant la modélisation. On crée la liste 
+'supprimer' qui contient les noms des attributs qu'on va enlever.
+'''
+supprimer = ['Total intl charge', 'Total night charge', 'Total eve charge', 'Total day charge', 'Number vmail messages']
+
+
 # Corrélation entre 'Churn' et les autres attributs
 print("\n# # # Correlation de Pearson avec Churn # # #")
+#print(abonnes_num.corrwith(abonnes.iloc[:,19]))
+abonnes_num = abonnes_num.drop(supprimer, axis=1)
 print(abonnes_num.corrwith(abonnes.iloc[:,19]))
 print("\n# # # Correlation de rang (Spearman) avec Churn # # #")
+#print(abonnes_num.corrwith(abonnes.iloc[:,19], method='spearman'))
 print(abonnes_num.corrwith(abonnes.iloc[:,19], method='spearman'))
 
 
@@ -138,25 +154,31 @@ def classement(data, data_test):
     from sklearn.tree import DecisionTreeClassifier
     from sklearn.ensemble import RandomForestClassifier
     from xgboost import XGBClassifier, plot_importance
-    from sklearn.metrics import accuracy_score,precision_score,recall_score,f1_score,confusion_matrix
+    from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_score, confusion_matrix
     
-    # Preparation des donnees
-    data = data[data["Churn"].notnull()]
+    # Preparation des données
+    # Données d’entrainement
+    data = data[data["Churn"].notnull()] # supprimer les rangées qui l’attribut Churn manquant (NA)
     x, y = data.drop("Churn", axis = 1), data[["Churn"]]
-    x = x.drop('State', axis = 1)
+    supprimer.append('State')
+    #print("supprimer : ", supprimer)
+    x = x.drop(supprimer, axis = 1) # supprimer les colonnes dont les noms sont dans la liste ‘supprimer’
 
+    # Données de test
     data_test = data_test[data_test["Churn"].notnull()]
     x_test, y_test = data_test.drop("Churn", axis = 1), data_test[["Churn"]]
-    x_test = x_test.drop('State', axis = 1)
+    x_test = x_test.drop(supprimer, axis = 1)
 
+    # Les algorithmes
     KNC = KNeighborsClassifier()
     DTC = DecisionTreeClassifier()
     RFC = RandomForestClassifier()
     XGB = XGBClassifier()
 
     algorithmes = [KNC, DTC, RFC, XGB]
-    noms_algo = ['KNeighborsClassifier','DecisionTreeClassifier','RandomForestClassifier','XGBClassifier']
+    noms_algo = ['KNeighborsClassifier', 'DecisionTreeClassifier', 'RandomForestClassifier', 'XGBClassifier']
 
+    # Les métriques
     score_accuracy = []
     score_precision = []
     score_recall = []
@@ -171,6 +193,7 @@ def classement(data, data_test):
         score_recall.append(recall_score(y_test, prediction))
         score_f1.append(f1_score(y_test, prediction))
 
+    # Importance des attributs
     plot_importance(XGB)
     plt.title('Importance d’attribut selon XGB')
     plt.grid(False)
@@ -187,7 +210,7 @@ def classement(data, data_test):
     plt.ylabel('Attributs')
     #plt.show()
 
-    # creer matrice de confusion pour XGB
+    # créer matrice de confusion pour XGB
     fig = plt.figure(figsize=(5, 5))
     fig.set_facecolor("#F3F3F3")
     mat = confusion_matrix(y_test, XGB.predict(x_test))
@@ -198,7 +221,7 @@ def classement(data, data_test):
     plt.title('Matrice de confusion XGB', color = "b")
     plt.subplots_adjust(wspace = .3, hspace = .3)
 
-    # creer matrice de confusion pour RandomForest
+    # créer matrice de confusion pour RandomForest
     fig = plt.figure(figsize=(5, 5))
     fig.set_facecolor("#F3F3F3")
     mat = confusion_matrix(y_test, RFC.predict(x_test))
@@ -211,7 +234,7 @@ def classement(data, data_test):
     plt.show()
 
 
-    # creer dataframe des resultats
+    # créer dataframe des résultats
     result = pd.DataFrame(columns = ['score_accuracy','score_f1', 'score_recall','score_precision'],index = noms_algo)
     result['score_accuracy'] = score_accuracy
     result['score_f1'] = score_f1
@@ -220,5 +243,5 @@ def classement(data, data_test):
     print(result.sort_values('score_accuracy', ascending = False))
     return result.sort_values('score_accuracy', ascending = False)
 
-# Apprentissage, Test et Validation
+# Appel de la fonction précédente
 classement(train, test)
