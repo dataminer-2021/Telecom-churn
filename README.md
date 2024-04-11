@@ -1,10 +1,6 @@
 # SCI 1402 Projet en science des données
 Travail noté 3
 
-Prénom et nom : Mohamed Ibrahim
-
-Numéro d’étudiant : 23112432
-
 Nom du projet : Telecom-churn
 
 ---
